@@ -15,7 +15,8 @@ HEADERS += \
     palindrome.h \
     zigzag.h \
     reversenum.h \
-    myatoi.h
+    myatoi.h \
+    median.h
 
 
 
