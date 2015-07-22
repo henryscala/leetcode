@@ -5,7 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 /* problem 1 of leetcode */
+
 
 int *numsCopy;
 
