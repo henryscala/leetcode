@@ -18,30 +18,40 @@ class Solution(object):
 #                return False 
         count_input = len(input_str)
         count_rule = len(rule_list)
-        i_rule = 0 
+        
         i_input = 0 
+        rule_index_list = [0]
+        #print("isMatch",input_str, rule_str)
         while i_input<count_input:
             char = input_str[i_input]
-            i_rule,ok=self.transitState(rule_list, i_rule, char)
-            if not ok:
+            rule_index_list=self.transitStates(rule_list, rule_index_list, char)
+            #print (i_input,"--",char,"---",rule_index_list)
+            if not rule_index_list:
                 return False
-            
-            i_input += 1 
-            if i_rule>=count_rule:
-                break 
-         
+            i_input += 1             
+        #exhausted the input str
         if i_input == count_input:
-            if i_rule == count_rule:
+                
+            to_the_end = any(map ( (lambda e:e >=0 and e >= count_rule),  rule_index_list))
+            if to_the_end :
                 return True
             else : 
-                for r in range(i_rule,count_rule): 
-                    if rule_list[r][2] != self.ZERO_OR_MORE:
-                        return False
-                return True
+                max_index = max(rule_index_list) 
+                
+                all_wildcard_match = all(map ( lambda i:rule_list[i][2]==self.ZERO_OR_MORE, range(max_index,count_rule)) )
+                if all_wildcard_match:
+                    return True
+                else:    
+                    return False 
         else:
+            
             return False 
             
+            
     
+                
+            
+    #transit a state, the state is represented by the rule_index  
     def transitState(self, rule_list,rule_index, char): 
         if rule_index>=len(rule_list):
             return -1, False 
@@ -66,10 +76,44 @@ class Solution(object):
             else:
                 return -1, False 
         
+    #transit multiple state    
+    def transitStates(self, rule_list, list_rule_index, char):
+        list_new_rule_index = []
+        for rule_index in list_rule_index :
+            new_rule_index = -1
+            curr_rule_index = rule_index
+            while True:
+                new_rule_index, ok = self.transitState(rule_list,curr_rule_index,char) 
+                if ok:
+                    list_new_rule_index.append(new_rule_index)
+                    curr_rule = rule_list[curr_rule_index]
+                    if curr_rule[2] == self.ZERO_OR_MORE: # match on 0 or more,  need to attempt further 
+                        curr_rule_index += 1 
+                    else:
+                        break 
+                        
+                else:
+                    break 
+                    
+        return list_new_rule_index
+                
+                    
     #some rules are left recursive, for example "a*a", change it to right recursive aa* 
     #some rules are redundant, for example "a*.*", change it to ".*" 
-    def eliminateRule(self,rule_list):
-        pass
+    #need to remove the duplicate rules                 
+    def addRule(self,rule_list,rule):
+        count = len(rule_list)
+        if rule_list:#non empty
+            last_rule = rule_list[count-1]
+            char_type,match_char,cardinal = last_rule
+            char_type_1,match_char_1,cardinal_1 = rule
+            
+            if cardinal == self.ZERO_OR_MORE:
+                if last_rule == rule:
+                    return 
+                    
+        rule_list.append(rule)
+        
         
     def parseRule(self, rule_str):
         rule_list=[]
@@ -79,21 +123,22 @@ class Solution(object):
         
 
         for c in rule_str:
-            if c == '.':                
-                rule_list.append(anychar_rule(c))
+            if c == '.':   
+                self.addRule(rule_list,anychar_rule(c))
+                
             elif c == '*':
                 rule = rule_list.pop()
                 rule = rule_to_any_number(rule)
-                rule_list.append(rule)
+                self.addRule(rule_list,rule)
             else:
-                rule_list.append(exactchar_rule(c))
+                self.addRule(rule_list,exactchar_rule(c))
                 
-                        
+        #print("rule_list",rule_list)                
         return rule_list
             
         
     def test(self):
-        #Some examples:
+        #Some examples: 
         assert not self.isMatch("aa","a")
         assert self.isMatch("aa","aa")  
         assert not self.isMatch("aaa","aa")  
@@ -104,4 +149,10 @@ class Solution(object):
         assert not self.isMatch("abcd", "d*")  
         assert not self.isMatch("a", "") 
         assert self.isMatch("aaa", "a*a")  
-        
+        assert not self.isMatch("aaa", "aaaa") 
+        assert self.isMatch( "baabbbaccbccacacc", "c*..b*a*a.*a..*c" ) 
+
+if __name__=='__main__' : 
+    s=Solution()
+    s.test()       
+    
